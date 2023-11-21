@@ -2,6 +2,7 @@
 #include <string>
 #include <windows.h>
 #include <sstream>
+#include <iomanip>
 #include <cmath>
 
 void ClearScreen();
@@ -57,12 +58,14 @@ int main()
 		}
 		else
 		{
-			command = FormattingExpression(command);
+			
 
 			do
 			{
+				command = FormattingExpression(command);
 				sub = FindSubExpression(command, sub_pos);
 				sub = SolveExpression(sub);
+
 
 				if (sub_pos != 0)
 				{
@@ -208,7 +211,7 @@ std::string SolveExpression(std::string expression)
 {
 	std::string result{ "" };
 	
-	float* value = new float[0];
+	double* value = new double[0];
 	int valueSize{ 0 };
 
 	int* multipleIndex = new int[0];
@@ -218,19 +221,19 @@ std::string SolveExpression(std::string expression)
 	int addSize{ 0 };
 
 	std::string strTempValue{ "" };
-	float tempValue{ 0 };
+	double tempValue{ 0 };
 
 	expression.insert(0, 1, '+');
 
 	for (int i = expression.size() - 1; i >= 0; i--)
 	{
-		if (expression[i] >= 48 && expression[i] <= 57 || expression[i] == 44) // [0,..,9] or '.'
+		if (expression[i] >= 48 && expression[i] <= 57 || expression[i] == 44) // [0,..,9] or ','
 		{
 			strTempValue.insert(0, 1, expression[i]);
 		}
 		else if (expression[i] == 42 && strTempValue != "") // '*'
 		{
-			tempValue = stof(strTempValue);
+			tempValue = stod(strTempValue);
 
 			AddArrayValue(value, tempValue, valueSize);
 			AddArrayValue(multipleIndex, valueSize - 1, multipleSize);
@@ -241,7 +244,7 @@ std::string SolveExpression(std::string expression)
 		}
 		else if (expression[i] == 47 && strTempValue != "") // '/'
 		{
-			tempValue = stof(strTempValue);
+			tempValue = stod(strTempValue);
 			tempValue = 1 / tempValue;
 
 			AddArrayValue(value, tempValue, valueSize);
@@ -252,21 +255,33 @@ std::string SolveExpression(std::string expression)
 		}
 		else if (expression[i] == 43 && strTempValue != "") // '+'
 		{
-			tempValue = stof(strTempValue);
+			tempValue = stod(strTempValue);
 
 			AddArrayValue(value, tempValue, valueSize);
-			//AddArrayValue(addIndex, valueSize - 1, addSize);
 
 			tempValue = 0;
 			strTempValue = "";
 		}
 		else if (expression[i] == 45 && strTempValue != "") // '-'
 		{
-			tempValue = stof(strTempValue);
+			tempValue = stod(strTempValue);
 			tempValue *= -1;
 
-			AddArrayValue(value, tempValue, valueSize);
-			//AddArrayValue(addIndex, valueSize - 1, addSize);
+			if (i > 1 && expression[i - 1] == 42)
+			{
+				AddArrayValue(value, tempValue, valueSize);
+				AddArrayValue(multipleIndex, valueSize - 1, multipleSize);
+			}
+			else if (i > 1 && expression[i - 1] == 47)
+			{
+				tempValue = 1 / tempValue;
+				AddArrayValue(value, tempValue, valueSize);
+				AddArrayValue(multipleIndex, valueSize - 1, multipleSize);
+			}
+			else
+			{
+				AddArrayValue(value, tempValue, valueSize);
+			}
 
 			tempValue = 0;
 			strTempValue = "";
@@ -285,14 +300,15 @@ std::string SolveExpression(std::string expression)
 	}
 
 	std::ostringstream s;
-	s << value[0];
+	s << std::fixed << std::setprecision(6) << value[0]; // some magic from stackoverflow about double output without sci notation, example 10e38 etc
 	result = s.str();
+	size_t end = result.find_last_not_of('0') + 1;
 
 	delete[] value;
 	delete[] multipleIndex;
 	delete[] addIndex;
 	
-	return result;
+	return result.erase(end);
 }
 
 //std::string FindFunction(std::string expression)
@@ -300,18 +316,5 @@ std::string SolveExpression(std::string expression)
 //	if (expression.find("sin") != std::string::npos)
 //	{
 //
-//	}
-//}
-
-//std::string OverrideExpression(std::string expression, std::string sub, int _start)
-//{
-//	std::string result{""};
-//
-//	for (int i = 0; i < expression.size(); i++)
-//	{
-//		if (i < _start)
-//		{
-//			result.append(expression[i]);
-//		}
 //	}
 //}
