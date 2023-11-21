@@ -5,13 +5,16 @@
 #include <iomanip>
 #include <cmath>
 
+using std::string;
+
 void ClearScreen();
 void GetInfo();
 void GetHelp();
 
-std::string FormattingExpression(std::string command);
-std::string FindSubExpression(std::string expression, int& sub_pos);
-std::string SolveExpression(std::string expression);
+void SetPrecision(string& command, int& precision);
+void FormattingExpression(string& command);
+void FindSubExpression(string& expression, std::string& sub, int& sub_pos);
+void SolveExpression(string& expression, int& precision);
 
 template<typename T>
 void AddArrayValue(T*& array, T value, int& _size);
@@ -23,38 +26,43 @@ int main()
 {
 	setlocale(LC_ALL, "ru");
 
-	std::string command;
-	std::string sub;
+	std::string inputCommand; //Accept input values from console
+	std::string subExpression; //
 	int sub_pos = -1;
+	int precision = 3; //Задаёт количество знаков после запятой для вывода ответа
 	bool isExit = false;
 
 	GetInfo();
 
 	do
 	{
-		command = "";
-		getline(std::cin, command);
+		inputCommand = "";
+		getline(std::cin, inputCommand);
 
-		if (command.find("-exit") != std::string::npos)
+		if (inputCommand.find("-exit") != string::npos)
 		{
 			isExit = true;
 		}
-		else if (command.find("-help") != std::string::npos)
+		else if (inputCommand.find("-help") != string::npos)
 		{
 			GetHelp();
 		}
-		else if (command.find("-clear") != std::string::npos)
+		else if (inputCommand.find("-clear") != string::npos)
 		{
 			ClearScreen();
 			GetInfo();
 		}
-		else if (command.find("-f y(x)=") != std::string::npos)
+		else if (inputCommand.find("-f y(x)=") != string::npos)
 		{
 			std::cout << "\nРазбор свойств функции [в разработке]" << std::endl;
 		}
-		else if (command == "")
+		else if (inputCommand == "")
 		{
 			continue;
+		}
+		else if (inputCommand.find("-p") != string::npos)
+		{
+			SetPrecision(inputCommand, precision);
 		}
 		else
 		{
@@ -62,20 +70,20 @@ int main()
 
 			do
 			{
-				command = FormattingExpression(command);
-				sub = FindSubExpression(command, sub_pos);
-				sub = SolveExpression(sub);
+				FormattingExpression(inputCommand);
+				FindSubExpression(inputCommand, subExpression, sub_pos);
+				SolveExpression(subExpression, precision);
 
 
 				if (sub_pos != 0)
 				{
-					command.erase(sub_pos - 1, command.find(')', sub_pos) - sub_pos + 2); //Удаление выражения, находящегося под скобками
-					command.insert(sub_pos - 1, sub);
+					inputCommand.erase(sub_pos - 1, inputCommand.find(')', sub_pos) - sub_pos + 2); //Удаление выражения, находящегося под скобками
+					inputCommand.insert(sub_pos - 1, subExpression);
 				}
 
 			} while (sub_pos != 0);
 			
-			std::cout << sub << std::endl;
+			std::cout << subExpression << std::endl;
 		}
 	} while (!isExit);
 
@@ -101,19 +109,22 @@ void GetInfo()
 
 void GetHelp()
 {
-	std::cout << "Доступные команды:\n"
+	std::cout << std::endl << "Доступные команды:\n"
 		"-exit - завершение работы\n"
 		"-help - список доступных команд и получение справки по работе программы\n"
-		"-сlear - очищение окна ввода/вывода\n\n"
+		"-сlear - очищение окна ввода/вывода\n"
+		"-p [value] - задаёт количество выводимых знаков после запятой \n\n"
 		"Для арифметического решения введите выражение. В выражении допускается использование символов \"+\",\"-\",\"*\",\"/\"\n"
-		"в случае, если между двумя членами выражения не стоит знака оператора, автоматически применяется операция умножения.\n"
-		"Для отделения целой части числа допускается использование символов \",\",\".\"\n"
+		"Для отделения дробной части допускается использование символов \",\" и \".\"\n"
 		"Символы \"(\" и \"[\",\")\" и \"]\" являются равнозначными и допускаются оба варианта написания.\n"
 		"Для тригонометрических функций доступны следующие варианты написания:\n"
-		"sin(x), cos(x), tg(x), ctg(x)\n\n"
-		"Для разбора функции введите команду -f y(x)=[function body]\n\n";
+		"sin(x), cos(x), tg(x), ctg(x)\n\n";
 }
 
+/*
+Функция добавления элемента в сущестующий массив
+Элемент добавляется в конец массива
+*/
 template<typename T>
 void AddArrayValue(T*& array, T value, int &_size)
 {
@@ -132,6 +143,9 @@ void AddArrayValue(T*& array, T value, int &_size)
 	array = tempArray;
 }
 
+/*
+Функция удаления элемента массива с индексом _pos
+*/
 template<typename T>
 void DeleteArrayValue(T*& array, int& _size, int _pos)
 {
@@ -155,13 +169,19 @@ void DeleteArrayValue(T*& array, int& _size, int _pos)
 	array = tempArray;
 }
 
-std::string FindSubExpression(std::string expression, int& sub_pos)
+/*
+Поиск наиболее приоритетного выражения, заключенного в скобки
+Выполняется последовательный посимвольный разбор массива символов выражения и вычленяется область
+заключённая между последней открывающей скобкой и последующей закрывающей скобкой
+*/
+void FindSubExpression(string &expression, string &sub, int& sub_pos)
 {
 	int startIndex{ 0 };
 	int endIndex{ 0 };
 
-	std::string sub{ "" };
-
+	/*
+	Цикл для определения позиции открывающей скобки startIndex и закрывающей endIndex
+	*/
 	for (int i = 0; i < expression.size(); i++)
 	{
 		if (expression[i] == '(')
@@ -171,66 +191,87 @@ std::string FindSubExpression(std::string expression, int& sub_pos)
 		}
 	}
 
+	/*
+	В случае, если endIndex (позиция закрывающей скобки) равен нулю, то в качестве подвыражения передаётся само выражение
+	*/
 	if (endIndex == 0)
 		sub = expression;
 	else
 		sub = expression.substr(startIndex, endIndex - startIndex);
 
 	sub_pos = startIndex;
-
-	return sub;
 }
 
-std::string FormattingExpression(std::string command)
+/* 
+Посимвольный разбор введённой команды для удаления нечитаемых символов, либо замены их на другие
+Приведение скобок и разделителей к одному общему виду
+*/
+void FormattingExpression(string &command)
 {
-	std::string expression{ "" };
-	std::string validLiteral{ "0123456789!sincostgctg()[].,+-*/" };
+	string tempExpression{ "" };
+	string validLiteral{ "0123456789!sincostgctg()[].,+-*/" }; //Список разрешённых литералов
 
+	/*
+	Цикл, в котором весь массив символов введённого выражения проверятеся на соответствие списку литералов
+	В случае, если i-ый символ соответствует списку, он записывается во временную строку
+	*/
 	for (int i = 0; i < command.size(); i++)
 	{
-		if (validLiteral.find_first_of(command[i]) != std::string::npos)
+		if (validLiteral.find_first_of(command[i]) != string::npos)
 		{
-			expression += command[i];
+			tempExpression += command[i];
 		}
 	}
 
-	for (int i = 0; i < expression.size(); i++)
+	/*
+	Цикл для приведения разделителей и скобок к одному общему виду
+	*/
+	for (int i = 0; i < tempExpression.size(); i++)
 	{
-		if (expression[i] == 46) //change '.' to ','
-			expression[i] = 44;
-		else if (expression[i] == 91) //change '[' to '('
-			expression[i] = 40;
-		else if (expression[i] == 93) //change ']' to ')'
-			expression[i] = 41; 
+		if (tempExpression[i] == 46) //change '.' to ','
+			tempExpression[i] = 44;
+		else if (tempExpression[i] == 91) //change '[' to '('
+			tempExpression[i] = 40;
+		else if (tempExpression[i] == 93) //change ']' to ')'
+			tempExpression[i] = 41;
 	}
 
-	return expression;
+	command = tempExpression;
 }
 
-std::string SolveExpression(std::string expression)
+/*
+Приведение подвыражения в массив числовых элементов и нахождение значения подвыражения
+*/
+void SolveExpression(string &expression, int &precision)
 {
-	std::string result{ "" };
+	string result{ "" };
 	
-	double* value = new double[0];
+	double* value = new double[0]; //Массив для записи всех элементов подвыражения
 	int valueSize{ 0 };
 
-	int* multipleIndex = new int[0];
+	int* multipleIndex = new int[0]; //Массив для записи индексов элементов с операцией умножение
 	int multipleSize{ 0 };
 
-	int* addIndex = new int[0];
-	int addSize{ 0 };
-
-	std::string strTempValue{ "" };
+	string strTempValue{ "" };
 	double tempValue{ 0 };
 
 	expression.insert(0, 1, '+');
 
+	/*
+	Посимвольный разбор подвыражения справа налево
+	Числовые значения записываются в переменную string tempValue
+	Если i-ый элемент равен одному из знаков операции, то значение хранящееся в tempValue записывается как элемент массива value, tempValue обнуляется
+	*/
 	for (int i = expression.size() - 1; i >= 0; i--)
 	{
 		if (expression[i] >= 48 && expression[i] <= 57 || expression[i] == 44) // [0,..,9] or ','
 		{
 			strTempValue.insert(0, 1, expression[i]);
 		}
+		/*
+		В случае знака операции умножения tempValue записывается в массив value
+		Индекс, под которым значение было помещено в массив, записывается в массив multipleIndex
+		*/
 		else if (expression[i] == 42 && strTempValue != "") // '*'
 		{
 			tempValue = stod(strTempValue);
@@ -242,6 +283,10 @@ std::string SolveExpression(std::string expression)
 			strTempValue = "";
 
 		}
+		/*
+		В случае операции деления индекс элемента также помещается в массив multipleIndex
+		Но сам элемент помещается в массив value в виде 1/tempValue
+		*/
 		else if (expression[i] == 47 && strTempValue != "") // '/'
 		{
 			tempValue = stod(strTempValue);
@@ -262,6 +307,10 @@ std::string SolveExpression(std::string expression)
 			tempValue = 0;
 			strTempValue = "";
 		}
+		/*
+		Если после знака операции вычитания следует число или конец массива, то знак интерпретируется как операция вычитания
+		Если следующий элемент представляет знак умножения или деления, то знак вычитания интерпретируется как обозначение отрицательного числа
+		*/
 		else if (expression[i] == 45 && strTempValue != "") // '-'
 		{
 			tempValue = stod(strTempValue);
@@ -288,33 +337,58 @@ std::string SolveExpression(std::string expression)
 		}
 	}
 
+	/*
+	Каждый элемент массива multipleIndex указывает на соответствующий индекс элемента в массиве value, к которому должна быть применена операция умножения
+	В результате каждой итерации в k-ый элемент массива value мы записываем рез-т умножения k-ого элемента и k+1 элемента, 
+	после чего элемент с индексом k+1 удаляется из массива value.
+	*/
 	for (int i = multipleSize - 1; i >= 0; i--)
 	{
 		value[multipleIndex[i]] = value[multipleIndex[i]] * value[multipleIndex[i] + 1];
 		DeleteArrayValue(value, valueSize, multipleIndex[i] + 1);
 	}
 
+	/*
+	После того как мы выполнили все операции умножения, остаётся сложить все положительные и отрицательные числа
+	Сложение выполняется в массиве справа налево и поэтому первый элемент массива будет содержать в себе значение всего подвыражения
+	*/
 	for (int i = valueSize - 2; i >= 0; i--)
 	{
 		value[i] = value[i] + value[i + 1];
 	}
 
+	/*
+	Приведение значения в общий вид с учётом установленного параметра количества знаков после запятой
+	*/
 	std::ostringstream s;
-	s << std::fixed << std::setprecision(6) << value[0]; // some magic from stackoverflow about double output without sci notation, example 10e38 etc
-	result = s.str();
-	size_t end = result.find_last_not_of('0') + 1;
+	s << std::fixed << std::setprecision(precision) << value[0]; 
+	expression = s.str();
+	size_t end = expression.find_last_not_of('0') + 1;
+
+	expression = expression.erase(end);
+
+	/*
+	Если последний элемент массива символов, содержащий значение подвыражения, является точкой, то есть, выражение не имеет дробной части после точки и является целым
+	То удаляем последний элемент массива символов, точку
+	*/
+	if (expression[expression.size() - 1] == '.')
+		expression.erase(expression.size() - 1);
 
 	delete[] value;
 	delete[] multipleIndex;
-	delete[] addIndex;
-	
-	return result.erase(end);
 }
 
-//std::string FindFunction(std::string expression)
-//{
-//	if (expression.find("sin") != std::string::npos)
-//	{
-//
-//	}
-//}
+void SetPrecision(string& command, int &precision)
+{
+	string validLiteral = "1234567890";
+
+	for (int i = command.size() - 1; i >= 0; i--)
+	{
+		if (validLiteral.find_first_of(command[i]) == string::npos)
+		{
+			command.erase(i, 1);
+		}
+	}
+
+	precision = stoi(command);
+}
