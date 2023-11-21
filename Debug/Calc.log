@@ -1,5 +1,0 @@
-﻿  Source.cpp
-D:\Viktor\VisualC\CPP\Calc\Calc\Source.cpp(185,20): warning C4018: <: несоответствие типов со знаком и без знака
-D:\Viktor\VisualC\CPP\Calc\Calc\Source.cpp(218,20): warning C4018: <: несоответствие типов со знаком и без знака
-D:\Viktor\VisualC\CPP\Calc\Calc\Source.cpp(229,20): warning C4018: <: несоответствие типов со знаком и без знака
-  Calc.vcxproj -> D:\Viktor\VisualC\CPP\Calc\Calc\Debug\Calc.exe
