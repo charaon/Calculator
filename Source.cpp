@@ -26,7 +26,7 @@ int main()
 {
 	setlocale(LC_ALL, "ru");
 
-	std::string inputCommand; //Accept input values from console
+	std::string inputCommand; //Команда получаемая из консоли
 	std::string subExpression; //
 	int sub_pos = -1;
 	int precision = 3; //Задаёт количество знаков после запятой для вывода ответа
