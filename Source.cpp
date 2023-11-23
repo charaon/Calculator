@@ -447,7 +447,7 @@ void SetPrecision(string& command, int &precision)
 
 void FindFunctions(string& command)
 {
-	const double rad = 57.2958;
+	const double RAD = 57.2958;
 	string arg;
 
 	if (command.find("cos") != string::npos)
@@ -460,7 +460,10 @@ void FindFunctions(string& command)
 		метод .find возвращает значение типа size_t поэтому необходимо выполнить явное преобразование типов в int, чтобы была доступна операция вычитания (по-другому оно не работает, я хз если честно)
 		*/
 		arg = command.substr(command.find("cos") + 4, size_t(int(command.find(')', command.find("cos"))) - int(command.find("cos", 0) + 4)));
-		command.insert(command.find(')', command.find("cos")), std::to_string(cos(stod(arg) / rad)));
+		/*
+		
+		*/
+		command.insert(command.find(')', command.find("cos")), std::to_string(cos(stod(arg) / RAD)));
 		command.erase(command.find("cos"), size_t(int(command.find(')', command.find("cos"))) - int(command.find("cos", 0) + 4)));
 
 	}
