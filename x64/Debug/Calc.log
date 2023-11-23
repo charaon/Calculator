@@ -1,5 +1,0 @@
-﻿  Source.cpp
-D:\Viktor\VisualC\CPP\Calc\Calc\Source.cpp(192,47): warning C4267: =: преобразование из "size_t" в "int"; возможна потеря данных
-D:\Viktor\VisualC\CPP\Calc\Calc\Source.cpp(267,2): warning C4267: инициализация: преобразование из "size_t" в "int"; возможна потеря данных
-D:\Viktor\VisualC\CPP\Calc\Calc\Source.cpp(387,2): warning C4267: инициализация: преобразование из "size_t" в "int"; возможна потеря данных
-  Calc.vcxproj -> D:\Viktor\VisualC\CPP\Calc\Calc\x64\Debug\Calc.exe
