@@ -445,26 +445,4 @@ void SetPrecision(string& command, int &precision)
 	precision = stoi(command);
 }
 
-void FindFunctions(string& command)
-{
-	const double RAD = 57.2958;
-	string arg;
 
-	if (command.find("cos") != string::npos)
-	{
-		/*
-		¬ычленение аргумента функции cos(arg) в переменную string
-
-		метод .substr первым аргументом принимает индекс с которого начинаетс€ выделение подстроки
-		вторым аргументом принимаетс€ количество символов, извлекаемое в подстроку
-		метод .find возвращает значение типа size_t поэтому необходимо выполнить €вное преобразование типов в int, чтобы была доступна операци€ вычитани€ (по-другому оно не работает, € хз если честно)
-		*/
-		arg = command.substr(command.find("cos") + 4, size_t(int(command.find(')', command.find("cos"))) - int(command.find("cos", 0) + 4)));
-		/*
-		
-		*/
-		command.insert(command.find(')', command.find("cos")), std::to_string(cos(stod(arg) / RAD)));
-		command.erase(command.find("cos"), size_t(int(command.find(')', command.find("cos"))) - int(command.find("cos", 0) + 4)));
-
-	}
-}
